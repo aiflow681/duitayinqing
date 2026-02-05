@@ -1,0 +1,506 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,minimal-ui,viewport-fit=cover">
+    <title>堆塔游戏</title>
+    <link rel="icon" type="image/x-icon" href="./img/favicon.png">
+    <style>
+        /* 基础样式重置 */
+        * { margin: 0; padding: 0; }
+        img { width: 100%; }
+        html { background: #fff; height: 100%; }
+        
+        body {
+            font-family: "Helvetica Neue", Arial, Helvetica, sans-serif;
+            margin: 0 auto;
+            text-align: center;
+            width: 100%;
+            height: 100%;
+            background: #4A90E2 url(img/main-bg.png);
+        }
+        
+        /* 响应式字体大小 */
+        @media screen and (min-height: 560px) { html { font-size: 100px; } }
+        @media screen and (min-height: 640px) { html { font-size: 112.5px; } }
+        @media screen and (min-height: 720px) { html { font-size: 125px; } }
+        @media screen and (min-height: 800px) { html { font-size: 137.5px; } }
+        @media screen and (min-height: 880px) { html { font-size: 150px; } }
+        @media screen and (min-height: 960px) { html { font-size: 162.5px; } }
+        @media screen and (min-height: 1040px) { html { font-size: 180px; } }
+        @media screen and (min-height: 1200px) { html { font-size: 200px; } }
+        html { font-size: 17.6vh; }
+        
+        /* 画布样式 */
+        #canvas {
+            position: fixed;
+            left: 0;
+            top: 0;
+            right: 0;
+            bottom: 0;
+            margin: auto;
+        }
+        
+        /* 通用样式 */
+        a { text-decoration: none; }
+        li, ol, ul { list-style-type: none; padding: 0; margin: 0; }
+        .hide { display: none; }
+        .clear { clear: both; }
+        
+        /* 加载页面样式 */
+        .loading {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            height: 100%;
+            width: 100%;
+        }
+        
+        .loading .main {
+            width: 60%;
+            margin: 0 auto;
+            color: #fff;
+        }
+        
+        .loading .main img {
+            width: 60%;
+            margin: 1rem auto 0;
+        }
+        
+        .loading .main .title { font-size: .3rem; }
+        .loading .main .text { font-size: .15rem; }
+        
+        .loading .main .bar {
+            height: .12rem;
+            width: 100%;
+            border: 3px solid #fff;
+            border-radius: .6rem;
+            margin: .1rem 0;
+        }
+        
+        .loading .main .bar .sub {
+            height: .1rem;
+            width: 98%;
+            margin: .008rem auto 0;
+        }
+        
+        .loading .main .bar .percent {
+            height: 100%;
+            width: 0;
+            background-color: #fff;
+            border-radius: .6rem;
+        }
+        
+        /* 内容容器 */
+        .content {
+            height: 100vh;
+            margin: 0 auto;
+            position: relative;
+        }
+        
+        /* 开始页面样式 */
+        .landing .title { width: 60%; }
+        .landing .action-2 {
+            position: absolute;
+            bottom: .2rem;
+            width: 100%;
+        }
+        .landing .start { width: 65%; }
+        
+        /* 动画效果 */
+        .slideTop { animation: st 1s ease-in-out; }
+        @keyframes st {
+            0% { transform: translateZ(0); }
+            100% { transform: translate3d(0, -100%, 0); }
+        }
+        
+        .slideBottom { animation: sb 1s ease-in-out; }
+        @keyframes sb {
+            0% { transform: translateZ(0); }
+            100% { transform: translate3d(0, 200%, 0); }
+        }
+        
+        .swing { animation: sw 2s ease-in-out alternate infinite; }
+        @keyframes sw {
+            0% { transform: rotate(5deg); transform-origin: top center; }
+            100% { transform: rotate(-5deg); transform-origin: top center; }
+        }
+        
+        /* 模态框样式 */
+        .modal .mask {
+            background-color: #000;
+            opacity: .6;
+            position: fixed;
+            height: 100%;
+            width: 100%;
+            top: 0;
+            left: 0;
+        }
+        
+        .modal .modal-content {
+            position: fixed;
+            height: 100%;
+            width: 90%;
+            margin-top: .3rem;
+            top: 0;
+        }
+        
+        .modal .main { width: 85%; margin: 0 auto; }
+        .modal .container { position: relative; }
+        .modal .bg { width: 100%; position: absolute; top: 0; left: 0; }
+        .modal .modal-main {
+            width: 100%;
+            position: absolute;
+            top: 0;
+            left: 0;
+            margin-top: -.4rem;
+        }
+        
+        .modal .over-img { width: 80%; margin: .8rem auto 0; }
+        .modal .over-score {
+            margin-top: -.2rem;
+            font-size: .5rem;
+            color: #ff735c;
+            text-shadow: -2px -2px 0 #fff, 2px -2px 0 #fff, -2px 2px 0 #fff, 2px 2px 0 #fff;
+        }
+        
+        .modal .tip { font-size: .16rem; color: #fff; }
+        .modal .over-button-b { width: 70%; margin: .1rem auto 0; }
+        
+        /* 字体 */
+        @font-face {
+            font-family: wenxue;
+            src: url(img/wenxue.eot);
+            src: url(img/wenxue.eot), url(img/wenxue.woff), url(img/wenxue.ttf), url(img/wenxue.svg);
+        }
+        .font-wenxue { font-family: wenxue; }
+        
+        /* 移动端优化样式 */
+        @media (max-width: 768px) {
+            html { font-size: 14px !important; }
+            body { touch-action: manipulation; }
+            
+            .virtual-controls {
+                position: fixed;
+                bottom: 20px;
+                left: 0;
+                right: 0;
+                display: flex;
+                justify-content: center;
+                z-index: 1000;
+                pointer-events: none;
+            }
+            
+            .virtual-controls .control-button {
+                width: 80px;
+                height: 80px;
+                margin: 0 10px;
+                background: rgba(255, 255, 255, 0.2);
+                border: 2px solid rgba(255, 255, 255, 0.5);
+                border-radius: 50%;
+                color: white;
+                font-size: 24px;
+                font-weight: bold;
+                cursor: pointer;
+                pointer-events: auto;
+                user-select: none;
+                touch-action: manipulation;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                backdrop-filter: blur(10px);
+                transition: all 0.2s ease;
+            }
+            
+            .virtual-controls .control-button:active {
+                background: rgba(255, 255, 255, 0.4);
+                transform: scale(0.95);
+            }
+            
+            .game-status {
+                position: fixed;
+                top: 20px;
+                left: 20px;
+                right: 20px;
+                display: flex;
+                justify-content: space-between;
+                z-index: 1000;
+                color: white;
+                font-weight: bold;
+                text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
+                pointer-events: none;
+            }
+            
+            .game-status .score,
+            .game-status .lives {
+                background: rgba(0, 0, 0, 0.3);
+                padding: 8px 12px;
+                border-radius: 15px;
+                backdrop-filter: blur(5px);
+            }
+            
+            #canvas { touch-action: none; }
+        }
+    </style>
+</head>
+<body>
+    <!-- 游戏画布 -->
+    <canvas id="canvas" class="hide"></canvas>
+    
+    <div class="content">
+        <!-- 加载页面 -->
+        <div class="loading">
+            <div class="main">
+                <img src="./img/main-loading.gif">
+                <div class="progress">
+                    <div class="title font-wenxue">0%</div>
+                    <div class="bar">
+                        <div class="sub">
+                            <div class="percent"></div>
+                        </div>
+                    </div>
+                    <div class="text">加载中...</div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 开始页面 -->
+        <div class="landing hide">
+            <div class="action-1">
+                <img src="./img/main-index-title.png" class="title swing">
+            </div>
+            <div class="action-2">
+                <img id="start" src="./img/main-index-start.png" class="start">
+            </div>
+        </div>
+        
+        <!-- 游戏结束模态框 -->
+        <div id="modal" class="modal hide">
+            <div class="mask"></div>
+            <div class="js-modal-content modal-content">
+                <div class="main">
+                    <div class="container">
+                        <img src="./img/main-modal-bg.png" class="bg">
+                        <div class="modal-main">
+                            <div id="over-modal" class="hide js-modal-card">
+                                <img src="./img/main-modal-over.png" class="over-img">
+                                <div id="score" class="over-score font-wenxue"></div>
+                                <div id="over-zero" class="hide">
+                                    <div class="tip">
+                                        <p>再试一次！</p>
+                                        <img src="./img/main-modal-again-b.png" class="over-button-b js-reload">
+                                        <img src="./img/main-modal-invite-b.png" class="over-button-b js-invite">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 移动端虚拟控制器 -->
+    <div class="virtual-controls" id="virtualControls" style="display: none;">
+        <button class="control-button" id="dropBtn" title="放下方块">⬇️</button>
+    </div>
+    
+    <!-- 移动端游戏状态显示 -->
+    <div class="game-status" id="gameStatus" style="display: none;">
+        <div class="score">分数: <span id="mobileScore">0</span></div>
+        <div class="lives">生命: <span id="mobileLives">3</span></div>
+    </div>
+    
+    <!-- 引入游戏引擎 -->
+    <script src="./js/main.js"></script>
+    <script src="./js/zepto-1.1.6.min.js"></script>
+
+    <script>
+        // 游戏变量
+        var domReady, loadFinish, canvasReady, loadError, gameStart, game, score, successCount;
+        
+        // 初始化窗口尺寸
+        var gameWidth = window.innerWidth;
+        var gameHeight = window.innerHeight;
+        var ratio = 1.5;
+        
+        if (gameHeight / gameWidth < ratio) {
+            gameWidth = Math.ceil(gameHeight / ratio);
+        }
+        
+        $('.content').css({ "height": gameHeight + "px", "width": gameWidth + "px" });
+        $('.js-modal-content').css({ "width": gameWidth + "px" });
+        
+        // 隐藏加载页面
+        function hideLoading() {
+            if (domReady && canvasReady) {
+                $('#canvas').show();
+                loadFinish = true;
+                setTimeout(function () {
+                    $('.loading').hide();
+                    $('.landing').show();
+                }, 1000);
+            }
+        }
+        
+        // 更新加载进度
+        function updateLoading(status) {
+            var success = status.success;
+            var total = status.total;
+            var failed = status.failed;
+            
+            if (failed > 0 && !loadError) {
+                loadError = true;
+                alert('网络错误，请重试');
+                return;
+            }
+            
+            var percent = parseInt((success / total) * 100);
+            
+            if (percent === 100 && !canvasReady) {
+                canvasReady = true;
+                hideLoading();
+            }
+            
+            percent = percent > 98 ? 98 : percent;
+            percent = percent + '%';
+            
+            $('.loading .title').text(percent);
+            $('.loading .percent').css({ 'width': percent });
+        }
+        
+        // 显示游戏结束界面
+        function overShowOver() {
+            $('#modal').show();
+            $('#over-modal').show();
+            $('#over-zero').show();
+        }
+        
+        // 游戏配置选项
+        const option = {
+            width: gameWidth,
+            height: gameHeight,
+            canvasId: 'canvas',
+            soundOn: true,
+            setGameScore: function (s) {
+                score = s;
+            },
+            setGameSuccess: function (s) {
+                successCount = s;
+            },
+            setGameFailed: function (f) {
+                $('#score').text(score);
+                if (f >= 3) overShowOver();
+            }
+        };
+        
+        // 初始化游戏
+        function gameReady() {
+            game = TowerGame(option);
+            game.load(function () {
+                game.init();
+            }, updateLoading);
+        }
+        
+        // 检测微信环境
+        var isWechat = navigator.userAgent.toLowerCase().indexOf("micromessenger") !== -1;
+        
+        if (isWechat) {
+            document.addEventListener("WeixinJSBridgeReady", gameReady, false);
+        } else {
+            gameReady();
+        }
+        
+        // 隐藏开始页面
+        function indexHide() {
+            $('.landing .action-1').addClass('slideTop');
+            $('.landing .action-2').addClass('slideBottom');
+            setTimeout(function () {
+                $('.landing').hide();
+            }, 950);
+        }
+        
+        // 点击开始按钮
+        $('#start').on('click', function () {
+            if (gameStart) return;
+            gameStart = true;
+            indexHide();
+            setTimeout(game.start, 400);
+        });
+        
+        // 点击重新开始
+        $('.js-reload').on('click', function () {
+            window.location.href = window.location.href + '?s=' + (+new Date());
+        });
+        
+        // 点击分享
+        $('.js-invite').on('click', function () {
+            $('.wxShare').show();
+        });
+        
+        $('.wxShare').on('click', function () {
+            $('.wxShare').hide();
+        });
+        
+        // 移动端优化
+        function initMobileOptimization() {
+            const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+            
+            if (isMobile) {
+                $('#virtualControls, #gameStatus').show();
+                initVirtualControls();
+                updateMobileStatus();
+                
+                document.addEventListener('touchmove', function(e) {
+                    if (e.target.closest('.virtual-controls')) return;
+                    e.preventDefault();
+                }, { passive: false });
+                
+                document.body.style.touchAction = 'manipulation';
+            }
+        }
+        
+        // 初始化虚拟控制器
+        function initVirtualControls() {
+            $('#dropBtn').on('touchstart', function(e) {
+                e.preventDefault();
+                if (game && gameStart) {
+                    game.touchStartListener && game.touchStartListener();
+                    $(this).addClass('active');
+                }
+            }).on('touchend', function(e) {
+                e.preventDefault();
+                $(this).removeClass('active');
+            });
+        }
+        
+        // 更新移动端状态显示
+        function updateMobileStatus() {
+            const originalSetGameScore = option.setGameScore;
+            option.setGameScore = function(s) {
+                score = s;
+                $('#mobileScore').text(score);
+                if (originalSetGameScore) originalSetGameScore(s);
+            };
+            
+            const originalSetGameFailed = option.setGameFailed;
+            option.setGameFailed = function(f) {
+                const livesLeft = Math.max(0, 3 - f);
+                $('#mobileLives').text(livesLeft);
+                if (originalSetGameFailed) originalSetGameFailed(f);
+            };
+            
+            $('#mobileScore').text(score || 0);
+            $('#mobileLives').text(3);
+        }
+        
+        // 页面加载完成
+        $(document).ready(function() {
+            initMobileOptimization();
+        });
+        
+        window.addEventListener('load', function () {
+            domReady = true;
+            hideLoading();
+        }, false);
+    </script>
+</body>
+</html>

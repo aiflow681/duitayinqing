@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>堆塔游戏 - Unity导出版</title>
+    <link rel="stylesheet" href="TemplateData/style.css">
+    <style>
+        /* 全局样式 */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        html, body {
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+        }
+        
+        #unity-container {
+            width: 100%;
+            height: 100%;
+            position: fixed;
+            top: 0;
+            left: 0;
+        }
+        
+        #unity-canvas {
+            width: 100%;
+            height: 100%;
+            display: block;
+            background: #000;
+        }
+        
+        /* 游戏界面样式 */
+        #game-ui {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            right: 20px;
+            display: none;
+            justify-content: space-between;
+            z-index: 1000;
+            color: white;
+            font-family: Arial, sans-serif;
+            font-size: 24px;
+            font-weight: bold;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
+            pointer-events: none;
+        }
+        
+        #game-ui .score-display,
+        #game-ui .lives-display {
+            background: rgba(0, 0, 0, 0.5);
+            padding: 10px 20px;
+            border-radius: 10px;
+            backdrop-filter: blur(5px);
+        }
+        
+        /* 开始界面 */
+        #start-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+        }
+        
+        #start-screen h1 {
+            color: white;
+            font-size: 48px;
+            margin-bottom: 30px;
+            text-shadow: 3px 3px 6px rgba(0, 0, 0, 0.5);
+        }
+        
+        #start-screen button {
+            background: #4CAF50;
+            color: white;
+            border: none;
+            padding: 20px 60px;
+            font-size: 24px;
+            border-radius: 50px;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+            transition: all 0.3s ease;
+        }
+        
+        #start-screen button:hover {
+            background: #45a049;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
+        }
+        
+        #start-screen button:active {
+            transform: translateY(0);
+        }
+        
+        /* 游戏结束界面 */
+        #gameover-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+        }
+        
+        #gameover-screen .modal {
+            background: white;
+            padding: 40px;
+            border-radius: 20px;
+            text-align: center;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+        }
+        
+        #gameover-screen h2 {
+            color: #e74c3c;
+            font-size: 36px;
+            margin-bottom: 20px;
+        }
+        
+        #gameover-screen .final-score {
+            font-size: 48px;
+            color: #ff735c;
+            margin: 20px 0;
+            font-weight: bold;
+        }
+        
+        #gameover-screen button {
+            background: #3498db;
+            color: white;
+            border: none;
+            padding: 15px 40px;
+            font-size: 20px;
+            border-radius: 30px;
+            cursor: pointer;
+            margin: 10px;
+            transition: all 0.3s ease;
+        }
+        
+        #gameover-screen button:hover {
+            background: #2980b9;
+            transform: scale(1.05);
+        }
+        
+        /* 移动端控制按钮 */
+        #mobile-controls {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: none;
+            z-index: 1000;
+        }
+        
+        #mobile-controls button {
+            width: 80px;
+            height: 80px;
+            background: rgba(255, 255, 255, 0.3);
+            border: 3px solid rgba(255, 255, 255, 0.6);
+            border-radius: 50%;
+            color: white;
+            font-size: 32px;
+            cursor: pointer;
+            backdrop-filter: blur(10px);
+            transition: all 0.2s ease;
+        }
+        
+        #mobile-controls button:active {
+            background: rgba(255, 255, 255, 0.5);
+            transform: scale(0.95);
+        }
+        
+        @media (max-width: 768px) {
+            #mobile-controls {
+                display: block;
+            }
+            
+            #start-screen h1 {
+                font-size: 36px;
+            }
+            
+            #start-screen button {
+                padding: 15px 40px;
+                font-size: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- 引擎容器 -->
+    <div id="unity-container" class="unity-desktop">
+        <canvas id="unity-canvas"></canvas>
+        <div id="unity-loading-bar">
+            <div id="unity-logo"></div>
+            <div id="unity-progress-bar-empty">
+                <div id="unity-progress-bar-full"></div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 游戏界面 -->
+    <div id="game-ui">
+        <div class="score-display">分数: <span id="score-value">0</span></div>
+        <div class="lives-display">生命: <span id="lives-value">3</span></div>
+    </div>
+    
+    <!-- 开始界面 -->
+    <div id="start-screen">
+        <h1>🏗️ 堆塔游戏</h1>
+        <p style="color: white; font-size: 18px; margin-bottom: 30px;">点击屏幕放下方块，堆得越高分数越高！</p>
+        <button id="start-button">开始游戏</button>
+    </div>
+    
+    <!-- 游戏结束界面 -->
+    <div id="gameover-screen">
+        <div class="modal">
+            <h2>游戏结束</h2>
+            <div class="final-score" id="final-score">0</div>
+            <p style="color: #666; margin-bottom: 20px;">再试一次，挑战更高分数！</p>
+            <button id="restart-button">重新开始</button>
+        </div>
+    </div>
+    
+    <!-- 移动端控制 -->
+    <div id="mobile-controls">
+        <button id="drop-button">⬇️</button>
+    </div>
+    
+    <script>
+        // 引擎加载器配置
+        var container = document.querySelector("#unity-container");
+        var canvas = document.querySelector("#unity-canvas");
+        var loadingBar = document.querySelector("#unity-loading-bar");
+        var progressBarFull = document.querySelector("#unity-progress-bar-full");
+        
+        var buildUrl = "Build";
+        var loaderUrl = buildUrl + "/TowerStack.loader.js";
+        var config = {
+            dataUrl: buildUrl + "/TowerStack.data",
+            frameworkUrl: buildUrl + "/TowerStack.framework.js",
+            codeUrl: buildUrl + "/TowerStack.wasm",
+            streamingAssetsUrl: "StreamingAssets",
+            companyName: "DefaultCompany",
+            productName: "TowerStack",
+            productVersion: "1.0",
+        };
+
+        var gameInstance = null;
+        
+        // 调整画布大小
+        function resizeCanvas() {
+            var width = window.innerWidth;
+            var height = window.innerHeight;
+            
+            canvas.width = width;
+            canvas.height = height;
+            
+            // 如果游戏已初始化，更新游戏尺寸
+            if (gameInstance) {
+                gameInstance.width = width;
+                gameInstance.height = height;
+                gameInstance.canvas.width = width;
+                gameInstance.canvas.height = height;
+                
+                // 重新计算游戏元素尺寸
+                gameInstance.blockWidth = width * 0.2;
+                gameInstance.blockHeight = gameInstance.blockWidth * 0.46;
+                gameInstance.ropeLength = height * 0.3;
+                
+                // 重新初始化游戏对象位置
+                if (gameInstance.hook) {
+                    gameInstance.hook.x = width / 2;
+                    gameInstance.hook.y = height * 0.15;
+                }
+                
+                // 重新计算相机位置
+                if (gameInstance.blocks && gameInstance.blocks.length > 0) {
+                   const topBlock = gameInstance.blocks[gameInstance.blocks.length - 1];
+                   const fixedTopY = gameInstance.hook.y + gameInstance.ropeLength;
+                   const gap = gameInstance.blockHeight * 1.6;
+                   gameInstance.cameraY = (fixedTopY + gap) - topBlock.y;
+                }
+            }
+        }
+        
+        resizeCanvas();
+        window.addEventListener('resize', resizeCanvas);
+        
+        // 初始化游戏
+        function initGame() {
+            // 创建游戏实例
+            gameInstance = new TowerStackGame({
+                canvasId: 'unity-canvas',
+                width: canvas.width,
+                height: canvas.height,
+                onScoreChange: function(score) {
+                    document.getElementById('score-value').textContent = score;
+                },
+                onLivesChange: function(lives) {
+                    document.getElementById('lives-value').textContent = lives;
+                },
+                onGameOver: function(finalScore) {
+                    document.getElementById('final-score').textContent = finalScore;
+                    document.getElementById('gameover-screen').style.display = 'flex';
+                    document.getElementById('game-ui').style.display = 'none';
+                }
+            });
+            
+            // 加载游戏资源
+            var assetList = [
+                { type: 'image', name: 'block', path: 'img/block.png' },
+                { type: 'image', name: 'hook', path: 'img/hook.png' },
+                { type: 'image', name: 'background', path: 'img/main-bg.png' }
+            ];
+            
+            gameInstance.loadAssets(assetList, 
+                function(loaded, total) {
+                },
+                function() {
+                    gameInstance.init();
+                }
+            );
+        }
+
+        // 模拟引擎加载过程
+        var script = document.createElement("script");
+        script.src = loaderUrl;
+        script.onload = () => {
+            createUnityInstance(canvas, config, (progress) => {
+                progressBarFull.style.width = 100 * progress + "%";
+            }).then((unityInstance) => {
+                loadingBar.style.display = "none";
+                initGame();
+            }).catch((message) => {
+                alert(message);
+            });
+        };
+        document.body.appendChild(script);
+        
+        // 开始按钮
+        document.getElementById('start-button').addEventListener('click', function() {
+            document.getElementById('start-screen').style.display = 'none';
+            document.getElementById('game-ui').style.display = 'flex';
+            gameInstance.start();
+        });
+        
+        // 重新开始按钮
+        document.getElementById('restart-button').addEventListener('click', function() {
+            document.getElementById('gameover-screen').style.display = 'none';
+            document.getElementById('game-ui').style.display = 'flex';
+            gameInstance.init();
+            gameInstance.start();
+        });
+        
+        // 移动端控制按钮
+        document.getElementById('drop-button').addEventListener('touchstart', function(e) {
+            e.preventDefault();
+            if (gameInstance) {
+                gameInstance.handleDrop();
+            }
+        });
+        
+        // 防止双击缩放
+        var lastTouchEnd = 0;
+        document.addEventListener('touchend', function(event) {
+            var now = (new Date()).getTime();
+            if (now - lastTouchEnd <= 300) {
+                event.preventDefault();
+            }
+            lastTouchEnd = now;
+        }, false);
+        
+        // 防止页面滚动
+        document.body.addEventListener('touchmove', function(e) {
+            e.preventDefault();
+        }, { passive: false });
+    </script>
+</body>
+</html>
